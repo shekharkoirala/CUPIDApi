@@ -1,7 +1,16 @@
 # Changelog
 
 [2025-03-29]
-
+- added pre-commit hooks
+- experiment on the model training in the notebook : precision above 0.99 , using custom feature
+- Tried sentence transformers for the embedding , but the performance is not good as expected
+- used standard scalar
+- used xgboost as the model
+- used feature selector in the embedding but it didn't improve the performance ( slightly expected )
+- Tested the model with the test data (Web)
+- TODO: umap/PCA for the embedding
+- TODO: notebook to script for the model training
+- TODO: API for the model inference
 
 [2024-03-28]
 - Initial tfidf matching system for creating training data
