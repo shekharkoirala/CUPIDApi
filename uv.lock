@@ -283,10 +283,12 @@ dependencies = [
     { name = "jupyterlab" },
     { name = "polars" },
     { name = "pre-commit" },
+    { name = "python-dotenv" },
     { name = "requests" },
     { name = "scikit-learn" },
     { name = "sentence-transformers" },
     { name = "shap" },
+    { name = "uvicorn" },
     { name = "xgboost" },
 ]
 
@@ -297,10 +299,12 @@ requires-dist = [
     { name = "jupyterlab", specifier = ">=4.3.6" },
     { name = "polars", specifier = ">=1.26.0" },
     { name = "pre-commit", specifier = ">=4.2.0" },
+    { name = "python-dotenv", specifier = ">=1.1.0" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "scikit-learn", specifier = ">=1.6.1" },
     { name = "sentence-transformers", specifier = ">=4.0.1" },
     { name = "shap", specifier = ">=0.47.1" },
+    { name = "uvicorn", specifier = ">=0.34.0" },
     { name = "xgboost", specifier = ">=3.0.0" },
 ]
 

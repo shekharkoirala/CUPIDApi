@@ -10,9 +10,11 @@ dependencies = [
     "jupyterlab>=4.3.6",
     "polars>=1.26.0",
     "pre-commit>=4.2.0",
+    "python-dotenv>=1.1.0",
     "requests>=2.32.3",
     "scikit-learn>=1.6.1",
     "sentence-transformers>=4.0.1",
     "shap>=0.47.1",
+    "uvicorn>=0.34.0",
     "xgboost>=3.0.0",
 ]
