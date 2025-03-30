@@ -2,5 +2,7 @@ data:
   reference_data: "data/referance_rooms-1737378184366.csv"
   supplier_data: "data/updated_core_rooms.csv"
   processed_data: "data/processed_data.json"
+  vectorizer: "data/vectorizer.pkl"
+
 
 log_level: "INFO"

@@ -8,6 +8,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import random
 import json
+import time
+import pickle
 
 
 class DataProcessor:
@@ -15,115 +17,63 @@ class DataProcessor:
     async def process_data(data: bool) -> Dict[str, Any]:
         logger = CustomLogger.get_logger()
         try:
+            start_time = time.perf_counter()
+            logger.info("Started Processing data")
             config = ConfigLoader.get_config()
             reference_df = pl.read_csv(config["data"]["reference_data"])
             supplier_df = pl.read_csv(config["data"]["supplier_data"])
 
-            reference_df_struct = reference_df.with_columns(
-                [pl.struct(["hotel_id", "room_id", "room_name"]).alias("data")]
-            )
-            reference_df_grouped = reference_df_struct.group_by("lp_id").agg(
-                pl.col("data")
-            )
-            supplier_df_struct = supplier_df.with_columns(
-                [
-                    pl.struct(
-                        [
-                            "core_room_id",
-                            "core_hotel_id",
-                            "supplier_room_id",
-                            "supplier_room_name",
-                        ]
-                    ).alias("data")
-                ]
-            )
-            supplier_df_grouped = supplier_df_struct.group_by("lp_id").agg(
-                pl.col("data")
-            )
-            merged_df = reference_df_grouped.join(
-                supplier_df_grouped, on="lp_id", how="inner"
-            )
+            reference_df_grouped = reference_df.group_by("lp_id").agg(pl.struct(["hotel_id", "room_id", "room_name"]).alias("data"))
+            supplier_df_grouped = supplier_df.group_by("lp_id").agg(pl.struct(["supplier_room_name"]).alias("data"))
+            merged_df = reference_df_grouped.join(supplier_df_grouped, on="lp_id", how="inner")
 
-            cleaned_data = []
+            # import pdb; pdb.set_trace()
+
+            vectorizer = TfidfVectorizer(stop_words="english")
+            all_room_names = [normalize_room_name(room["room_name"]) for hotel in merged_df["data"] for room in hotel] + [
+                normalize_room_name(room["supplier_room_name"]) for hotel in merged_df["data_right"] for room in hotel
+            ]
+            vectorizer.fit(all_room_names)
+            with open(config["data"]["vectorizer"], "wb") as f:
+                pickle.dump(vectorizer, f)
+            logger.info(f"Vectorizer fitted in {time.perf_counter() - start_time:.2f} seconds and saved to {config['data']['vectorizer']}")
+
+            matched_pairs, not_matched_pairs = set(), set()
             for row in merged_df.iter_rows(named=True):
-                reference = []
-                supplier = []
-                for r in row["data"]:
-                    reference.append(normalize_room_name(r["room_name"]))
-                for s in row["data_right"]:
-                    supplier.append(normalize_room_name(s["supplier_room_name"]))
-                cleaned_data.append({"reference": reference, "supplier": supplier})
+                ref_names = [normalize_room_name(r["room_name"]) for r in row["data"]]
+                sup_names = [normalize_room_name(s["supplier_room_name"]) for s in row["data_right"]]
 
-            all_room_names = [
-                name
-                for hid in range(len(cleaned_data))
-                for name in cleaned_data[hid]["supplier"]
-                + cleaned_data[hid]["reference"]
-            ]  # hid = hotel_id
-            vectorizer = TfidfVectorizer(stop_words="english").fit(all_room_names)
+                ref_vecs = vectorizer.transform(ref_names)
+                sup_vecs = vectorizer.transform(sup_names)
 
-            matched_pairs = set()
-            not_matched_pairs = set()
-            for hotels in cleaned_data:
-                supplier = hotels["supplier"]
-                reference = hotels["reference"]
-                # supplier = ["apartment for 5 people"]
-                # reference = ["apartment for 4 people"]
-                sims = cosine_similarity(
-                    vectorizer.transform(supplier), vectorizer.transform(reference)
-                )
-                for i, sup_name in enumerate(supplier):
-                    highest_score = 0
-                    highest_match = {}
-                    for j, ref_name in enumerate(reference):
-                        if sims[i, j] >= highest_score:
-                            highest_match = {"s": sup_name, "r": ref_name}
-                            highest_score = sims[i, j]
+                sims = cosine_similarity(sup_vecs, ref_vecs)
 
-                    if highest_score >= 0.5:  # and highest_score<0.9999999999:
-                        r_words = highest_match["r"].split()
-                        no_match = [
-                            w for w in r_words if w not in highest_match["s"].split()
-                        ]
-                        no_match_count = len(no_match)
-                        for w in no_match:
-                            if check_in_ignore_words(w):
-                                no_match_count -= 1
-                        # print(r_words, no_match)
-                        if not no_match_count:
-                            # print(f"{highest_score:.2f}", highest_match, no_match)
-                            if await DataProcessor.analyze_strings(
-                                highest_match, no_match
-                            ):
-                                # print(f"{highest_score:.2f}", highest_match["s"], "\t", highest_match["r"], no_match ,)
-                                matched_pairs.add(
-                                    (highest_match["s"], highest_match["r"], 1)
-                                )
+                for i, s_name in enumerate(sup_names):
+                    j = sims[i].argmax()
+                    score = sims[i, j]
+                    r_name = ref_names[j]
+
+                    if score >= 0.5:
+                        unmatched_words = [w for w in r_name.split() if w not in s_name.split()]
+                        ignore_filter = [w for w in unmatched_words if not check_in_ignore_words(w)]
+                        if not ignore_filter:
+                            highest_match = {"s": s_name, "r": r_name}
+                            if await DataProcessor.analyze_strings(highest_match, unmatched_words):
+                                matched_pairs.add((s_name, r_name, 1))
                                 continue
 
-                    not_matched_pairs.add((highest_match["s"], highest_match["r"], 0))
+                    not_matched_pairs.add((s_name, r_name, 0))
 
-            # check if good pairs are same names
-            same_room_name_list = []
-            diff_room_name_list = []
-            for pair in list(matched_pairs):
-                supplier_name, reference_name, _label = pair
-                if supplier_name != reference_name:
-                    diff_room_name_list.append(pair)
-                else:
-                    same_room_name_list.append(pair)
+            same_room_name_list = [p for p in matched_pairs if p[0] == p[1]]
+            diff_room_name_list = [p for p in matched_pairs if p[0] != p[1]]
 
-            matched_cases = (
-                random.sample(same_room_name_list, 2000 - len(diff_room_name_list))
-                + diff_room_name_list
-            )
+            matched_cases = random.sample(same_room_name_list, 2000 - len(diff_room_name_list)) + diff_room_name_list
             not_matched_cases = random.sample(list(not_matched_pairs), 2000)
+
             output = matched_cases + not_matched_cases
             random.shuffle(output)
 
-            logger.info(
-                f"Total pairs: {len(output)} at {config['data']['processed_data']}"
-            )
+            logger.info(f"Total pairs: {len(output)} at {config['data']['processed_data']} in {time.perf_counter() - start_time:.2f} seconds")
             with open(config["data"]["processed_data"], "w") as f:
                 json.dump(output, f)
 
