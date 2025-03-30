@@ -1,28 +1,52 @@
-import xgboost as xgb
-from typing import Dict, Any
-from app.utils.model_loader import ModelLoader
-from app.config.model_config import ModelConfig
+from sklearn.model_selection import train_test_split
+import os
+from app.utils.config_loader import ConfigLoader
+from app.utils.logger import CustomLogger
+from app.libs.cupid_models import XGBoostModel
+from app.libs.cupid_features import get_features
+import json
 
 
 class ModelTrainer:
-    @staticmethod
-    async def train_model(model_params: Dict[str, Any]) -> Dict[str, Any]:
+    def __init__(self):
+        self.config = ConfigLoader.get_config()
+        self.logger = CustomLogger.get_logger()
+        self.model = XGBoostModel(config=self.config, logger=self.logger)
+
+    async def start_training(self, parameter_tuning: bool) -> str:
         try:
-            # Create and train XGBoost model
-            # This is a placeholder - implement your actual training logic
-            dtrain = xgb.DMatrix(data=[[1, 2, 3]], label=[0])
-            bst = xgb.train(model_params, dtrain)
+            X_train, X_test, y_train, y_test = await self.load_split_data()
+            if not parameter_tuning:
+                self.model.train_model(X_train, X_test, y_train, y_test)
+            else:
+                self.model.parameter_tuning(X_train, X_test, y_train, y_test)
 
-            # Save the model
-            bst.save_model(str(ModelConfig.MODEL_PATH))
+            return self.model.model_path
 
-            # Reload the model in the ModelLoader
-            ModelLoader.load_model(ModelConfig.MODEL_PATH)
-
-            return {
-                "trained": True,
-                "parameters_used": model_params,
-                "model_path": str(ModelConfig.MODEL_PATH),
-            }
         except Exception as e:
             raise Exception(f"Model training failed: {str(e)}")
+
+    async def load_split_data(self):
+        # check if data exists
+        try:
+            data_path = self.config["data"]["processed_data"]
+            if not os.path.exists(data_path):
+                self.logger.error(
+                    f"Data file not found at {data_path}, trigger /processData endpoint to process data and then trigger /trainModel endpoint to train model"
+                )
+                raise FileNotFoundError(
+                    f"Data file not found at {data_path}, trigger /processData endpoint to process data and then trigger /trainModel endpoint to train model"
+                )
+
+            else:
+                with open(data_path, "r") as f:
+                    data = json.load(f)
+
+                feature_matrix, labels = get_features(data)
+
+            X_train, X_test, y_train, y_test = train_test_split(
+                feature_matrix, labels, test_size=self.config["test_size"], random_state=self.config["random_state"]
+            )
+            return X_train, X_test, y_train, y_test
+        except Exception as e:
+            raise Exception(f"Error loading split data: {str(e)}")

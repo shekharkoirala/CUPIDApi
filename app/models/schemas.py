@@ -26,13 +26,20 @@ class ProcessDataResponse(BaseModel):
 
 
 class TrainModelRequest(BaseModel):
-    model_params: Dict[str, Any]
+    parameter_tuning: bool = False
 
 
 class TrainModelResponse(BaseModel):
     status: str
     message: str
-    model_path: str
+    task_id: str
+
+
+class TrainModelStatusResponse(BaseModel):
+    status: str
+    message: str
+    model_path: Optional[str] = None
+    error: Optional[str] = None
 
 
 class RoomMatchRequest(BaseModel):

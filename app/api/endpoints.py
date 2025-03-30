@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from dotenv import load_dotenv
 from app.models.schemas import (
     ProcessDataRequest,
@@ -7,49 +7,68 @@ from app.models.schemas import (
     TrainModelResponse,
     RoomMatchRequest,
     RoomMatchResponse,
+    TrainModelStatusResponse,
 )
 from app.services.data_processor import DataProcessor
 from app.services.model_trainer import ModelTrainer
 from app.services.room_matcher import RoomMatcher
-from fastapi import Depends
 from app.utils.auth import verify_api_key
 from app.api.response_docs import process_data_responses
+from uuid import uuid4
+from fastapi import BackgroundTasks
+from typing import Dict, Optional
 
 load_dotenv()
 
 router = APIRouter()
 
+# Dictionary to store training status (In production, use Redis or a database)
+training_tasks: Dict[str, Dict[str, Optional[str]]] = {}
 
-@router.post(
-    "/processData", response_model=ProcessDataResponse, responses=process_data_responses
-)
-async def process_data(
-    request: ProcessDataRequest, api_key: str = Depends(verify_api_key)
-):
+
+@router.post("/processData", response_model=ProcessDataResponse, responses=process_data_responses)
+async def process_data(request: ProcessDataRequest, api_key: str = Depends(verify_api_key)):
     try:
         processed_data = await DataProcessor.process_data(request.force_update)
-        return ProcessDataResponse(
-            status="success", message="Data processed successfully", data=processed_data
-        )
+        return ProcessDataResponse(status="success", message="Data processed successfully", data=processed_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/trainModel", response_model=TrainModelResponse)
-async def train_model(
-    request: TrainModelRequest, api_key: str = Depends(verify_api_key)
-):
+async def train_model(request: TrainModelRequest, background_tasks: BackgroundTasks, api_key: str = Depends(verify_api_key)):
     try:
-        training_result = await ModelTrainer.train_model(request.model_params)
-        return TrainModelResponse(
-            status="success",
-            message="Model trained successfully",
-            model_params=training_result,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        # check if already running background task
+        if any(task["status"] == "processing" for task in training_tasks.values()):
+            raise HTTPException(status_code=429, detail="Training already in progress, please wait for it to complete")
+
+        task_id = str(uuid4())
+        training_tasks[task_id] = {"status": "processing", "model_path": None, "error": None}
+
+        background_tasks.add_task(run_training, task_id, request.parameter_tuning)
+
+        return TrainModelResponse(status="accepted", message="Model training started", task_id=task_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/trainModel/{task_id}", response_model=TrainModelStatusResponse)
+async def get_training_status(task_id: str, api_key: str = Depends(verify_api_key)):
+    if task_id not in training_tasks:
+        raise HTTPException(status_code=404, detail="Training task not found")
+
+    task = training_tasks[task_id]
+    return TrainModelStatusResponse(status=task["status"], message="Training status retrieved", model_path=task["model_path"], error=task["error"])
+
+
+async def run_training(task_id: str, parameter_tuning: bool):
+    try:
+        training_tasks[task_id]["status"] = "processing"
+        trainer = ModelTrainer()
+        model_path = await trainer.start_training(parameter_tuning)
+        training_tasks[task_id].update({"status": "completed", "model_path": model_path})
+    except Exception as e:
+        training_tasks[task_id].update({"status": "failed", "error": str(e)})
 
 
 @router.post("/room_match", response_model=RoomMatchResponse)
@@ -59,9 +78,7 @@ async def room_match(request: RoomMatchRequest, api_key: str = Depends(verify_ap
             raise HTTPException(status_code=400, detail="User ID is required")
         if not request.preferences:
             raise HTTPException(status_code=400, detail="Preferences are required")
-        matched_room = await RoomMatcher.match_room(
-            request.user_id, request.preferences
-        )
+        matched_room = await RoomMatcher.match_room(request.user_id, request.preferences)
         return RoomMatchResponse(
             status="success",
             message="Room matching completed",

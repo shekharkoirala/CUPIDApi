@@ -55,8 +55,10 @@ class DataProcessor:
 
                     if score >= 0.5:
                         unmatched_words = [w for w in r_name.split() if w not in s_name.split()]
+                        # checking reference words in supplier, suppliers tends to have more words
                         ignore_filter = [w for w in unmatched_words if not check_in_ignore_words(w)]
-                        if not ignore_filter:
+                        # only care if unmatched words are in ignore list eg: no pets, no smoking, etc
+                        if not ignore_filter:  # that means all unmatched words are in ignore list
                             highest_match = {"s": s_name, "r": r_name}
                             if await DataProcessor.analyze_strings(highest_match, unmatched_words):
                                 matched_pairs.add((s_name, r_name, 1))
@@ -64,8 +66,8 @@ class DataProcessor:
 
                     not_matched_pairs.add((s_name, r_name, 0))
 
-            same_room_name_list = [p for p in matched_pairs if p[0] == p[1]]
-            diff_room_name_list = [p for p in matched_pairs if p[0] != p[1]]
+            same_room_name_list = [p for p in matched_pairs if p[0] == p[1]]  # same room name: all of cases in dataset
+            diff_room_name_list = [p for p in matched_pairs if p[0] != p[1]]  # not so much
 
             matched_cases = random.sample(same_room_name_list, 2000 - len(diff_room_name_list)) + diff_room_name_list
             not_matched_cases = random.sample(list(not_matched_pairs), 2000)

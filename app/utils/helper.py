@@ -1,4 +1,5 @@
 import re
+import os
 
 
 def normalize_room_name(name: str) -> str:
@@ -97,3 +98,17 @@ def check_in_ignore_words(word):
     ] + [str(i) for i in range(0, 10)]:
         return True
     return False
+
+
+def get_next_experiment_folder(base_path: str) -> str:
+    existing_folders = [d for d in os.listdir(base_path) if os.path.isdir(os.path.join(base_path, d)) and d.startswith("exp")]
+
+    if not existing_folders:
+        next_num = 1
+    else:
+        # Extract numbers from folder names and find max
+        nums = [int(folder[3:]) for folder in existing_folders]
+        next_num = max(nums) + 1
+
+    os.makedirs(os.path.join(base_path, f"exp{next_num}"), exist_ok=True)
+    return os.path.join(base_path, f"exp{next_num}")

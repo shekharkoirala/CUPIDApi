@@ -1,6 +1,8 @@
 # custom git ignore
 data/
 Notebooks/.ipynb_checkpoints/
+mlmodels/
+mlreports/
 
 */__pycache__/
 */*/__pycache__/
