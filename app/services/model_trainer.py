@@ -5,6 +5,7 @@ from app.utils.logger import CustomLogger
 from app.libs.cupid_models import XGBoostModel
 from app.libs.cupid_features import get_features
 import json
+from app.services.model_tuner import ModelTuner
 
 
 class ModelTrainer:
@@ -16,10 +17,14 @@ class ModelTrainer:
     async def start_training(self, parameter_tuning: bool) -> str:
         try:
             X_train, X_test, y_train, y_test = await self.load_split_data()
-            if not parameter_tuning:
-                self.model.train_model(X_train, X_test, y_train, y_test)
+
+            if parameter_tuning:
+                tuner = ModelTuner()
+                best_params, best_score = tuner.tune_hyperparameters(X_train, X_test, y_train, y_test)
+                self.logger.info(f"Tuning completed. Best score: {best_score}")
+                self.model.load_model()  # Load the best model saved during tuning
             else:
-                self.model.parameter_tuning(X_train, X_test, y_train, y_test)
+                self.model.train_model(X_train, X_test, y_train, y_test)
 
             return self.model.model_path
 

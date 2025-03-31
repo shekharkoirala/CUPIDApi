@@ -1,35 +1,40 @@
 data:
-  reference_data: "data/referance_rooms-1737378184366.csv"
-  supplier_data: "data/updated_core_rooms.csv"
-  processed_data: "data/processed_data.json"
-  vectorizer: "data/vectorizer.pkl"
-
-test_size: 0.2
-random_state: 42
-log_level: "INFO"
-
-sentence_transformer_model: "all-MiniLM-L6-v2"
-feature_type: "numeric_feature" # "numeric_feature" or "embedding_feature"
-
-
+  processed_data: data/processed_data.json
+  reference_data: data/referance_rooms-1737378184366.csv
+  supplier_data: data/updated_core_rooms.csv
+  vectorizer: data/vectorizer.pkl
+feature_type: numeric_feature
+log_level: INFO
 model_configs:
   xgb:
-    model_path: "mlmodels/xgb_model.json"
-    model_name: "xgb"
-    model_type: "xgboost"
-    report_path: "mlreports"
     fixed_params:
-      eval_metric: "logloss"
-      standard_scaler: true
       apply_imbalance: false
+      eval_metric: logloss
+      standard_scaler: true
       threshold: 0.96
+    model_name: xgb
+    model_path: mlmodels/xgb_model.json
+    model_type: xgboost
+    report_path: mlreports
     search_params:
-      n_estimators: [100, 200, 300]
-      learning_rate: [0.01, 0.05, 0.1]
-      max_depth: [3, 5, 10]
-      min_child_weight: [1, 3, 5]
-      gamma: [0, 0.1, 0.5]
-      subsample: [0.5, 0.7, 1]
-      colsample_bytree: [0.5, 0.7, 1]
-      reg_alpha: [0, 0.1, 0.5]
-      reg_lambda: [0, 0.1, 0.5]
+      colsample_bytree:
+      - 0.7962979498154026
+      gamma:
+      - 0.07407655998633511
+      learning_rate:
+      - 0.02053083889963104
+      max_depth:
+      - 8
+      min_child_weight:
+      - 3
+      n_estimators:
+      - 300
+      reg_alpha:
+      - 0.3100421704998185
+      reg_lambda:
+      - 0.34097532561863875
+      subsample:
+      - 0.7093174872587061
+random_state: 42
+sentence_transformer_model: all-MiniLM-L6-v2
+test_size: 0.2
