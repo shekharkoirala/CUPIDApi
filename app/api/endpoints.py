@@ -18,6 +18,7 @@ from uuid import uuid4
 from fastapi import BackgroundTasks
 from typing import Dict, Optional
 
+
 load_dotenv()
 
 router = APIRouter()
@@ -74,18 +75,7 @@ async def run_training(task_id: str, parameter_tuning: bool):
 @router.post("/room_match", response_model=RoomMatchResponse)
 async def room_match(request: RoomMatchRequest, api_key: str = Depends(verify_api_key)):
     try:
-        if not request.user_id:
-            raise HTTPException(status_code=400, detail="User ID is required")
-        if not request.preferences:
-            raise HTTPException(status_code=400, detail="Preferences are required")
-        matched_room = await RoomMatcher.match_room(request.user_id, request.preferences)
-        return RoomMatchResponse(
-            status="success",
-            message="Room matching completed",
-            user_id=request.user_id,
-            matched_room=matched_room,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        results = await RoomMatcher.match_rooms(reference_catalog=request.referenceCatalog, input_catalog=request.inputCatalog, debug=request.debug)
+        return results  # RoomMatchResponse
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

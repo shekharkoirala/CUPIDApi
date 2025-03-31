@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.endpoints import router
-from app.utils.model_loader import ModelLoader
-from app.config.model_config import ModelConfig
 from contextlib import asynccontextmanager
 from app.utils.config_loader import ConfigLoader
 from app.utils.logger import CustomLogger
+from app.libs.cupid_models import XGBoostModel, ModelManager, VectorizerManager
+from app.libs.cupid_features import load_vectorizer_pkl_file
+import os
 
 # Load config at startup
 config = ConfigLoader.load_config("app/config/config.yaml")
@@ -15,8 +16,14 @@ logger = CustomLogger.setup_logger(config["log_level"])
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load model on startup
-    if ModelConfig.MODEL_PATH.exists():
-        ModelLoader.load_model(ModelConfig.MODEL_PATH)
+    model_path = config["model_configs"]["xgb"]["model_path"]
+    if os.path.exists(model_path):
+        model = XGBoostModel(config, logger)
+        model.load_model()
+        ModelManager.set_model(model)
+        vectorizer = load_vectorizer_pkl_file()
+        VectorizerManager.set_vectorizer(vectorizer)
+        logger.info(f"Model loaded from {model_path}")
     else:
         print("Warning: No model file found. Please train the model first.")
     # Startup

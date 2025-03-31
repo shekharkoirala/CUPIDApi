@@ -22,6 +22,7 @@ model_configs:
       eval_metric: "logloss"
       standard_scaler: true
       apply_imbalance: false
+      threshold: 0.96
     search_params:
       n_estimators: [100, 200, 300]
       learning_rate: [0.01, 0.05, 0.1]

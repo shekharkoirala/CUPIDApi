@@ -14,7 +14,7 @@ import pickle
 
 class DataProcessor:
     @staticmethod
-    async def process_data(data: bool) -> Dict[str, Any]:
+    async def process_data(force_update: bool) -> Dict[str, Any]:
         logger = CustomLogger.get_logger()
         try:
             start_time = time.perf_counter()
