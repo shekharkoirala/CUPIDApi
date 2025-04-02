@@ -6,6 +6,7 @@ from app.libs.cupid_models import XGBoostModel
 from app.libs.cupid_features import get_features
 import json
 from app.services.model_tuner import ModelTuner
+from app.utils.model_reloader import reload_model
 
 
 class ModelTrainer:
@@ -25,6 +26,8 @@ class ModelTrainer:
                 self.model.load_model()  # Load the best model saved during tuning
             else:
                 self.model.train_model(X_train, X_test, y_train, y_test)
+                # force reload model from utils model_reloader.py
+                reload_model()
 
             return self.model.model_path
 

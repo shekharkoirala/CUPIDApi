@@ -25,8 +25,8 @@ COPY .python-version .
 COPY pyproject.toml .
 
 # RUN uv pip install --no-cache --system .
-RUN uv venv && \
-    .venv/bin/uv sync
+RUN uv venv && uv pip install --python .venv/bin/python --system uv && .venv/bin/uv sync
+
 
 COPY . .
 

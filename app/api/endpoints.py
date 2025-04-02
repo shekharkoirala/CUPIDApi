@@ -17,7 +17,8 @@ from app.api.response_docs import process_data_responses
 from uuid import uuid4
 from fastapi import BackgroundTasks
 from typing import Dict, Optional
-
+import asyncio
+import traceback
 
 load_dotenv()
 
@@ -46,7 +47,7 @@ async def train_model(request: TrainModelRequest, background_tasks: BackgroundTa
         task_id = str(uuid4())
         training_tasks[task_id] = {"status": "processing", "model_path": None, "error": None}
 
-        background_tasks.add_task(run_training, task_id, request.parameter_tuning)
+        background_tasks.add_task(start_training_in_background, task_id, request.parameter_tuning)
 
         return TrainModelResponse(status="accepted", message="Model training started", task_id=task_id)
     except Exception as e:
@@ -62,6 +63,10 @@ async def get_training_status(task_id: str, api_key: str = Depends(verify_api_ke
     return TrainModelStatusResponse(status=task["status"], message="Training status retrieved", model_path=task["model_path"], error=task["error"])
 
 
+def start_training_in_background(task_id: str, parameter_tuning: bool):
+    asyncio.run(run_training(task_id, parameter_tuning))
+
+
 async def run_training(task_id: str, parameter_tuning: bool):
     try:
         training_tasks[task_id]["status"] = "processing"
@@ -69,6 +74,8 @@ async def run_training(task_id: str, parameter_tuning: bool):
         model_path = await trainer.start_training(parameter_tuning)
         training_tasks[task_id].update({"status": "completed", "model_path": model_path})
     except Exception as e:
+        print(f"Error training model: {e}")
+        print(traceback.format_exc())
         training_tasks[task_id].update({"status": "failed", "error": str(e)})
 
 

@@ -10,16 +10,23 @@ import random
 import json
 import time
 import pickle
+import os
 
 
 class DataProcessor:
     @staticmethod
     async def process_data(force_update: bool) -> Dict[str, Any]:
         logger = CustomLogger.get_logger()
+        config = ConfigLoader.get_config()
         try:
+            if not force_update:
+                if os.path.exists(config["data"]["processed_data"]):
+                    logger.info("Processed data already exists, skipping processing")
+                    return {"processed_path": config["data"]["processed_data"]}
+
             start_time = time.perf_counter()
             logger.info("Started Processing data")
-            config = ConfigLoader.get_config()
+
             reference_df = pl.read_csv(config["data"]["reference_data"])
             supplier_df = pl.read_csv(config["data"]["supplier_data"])
 
