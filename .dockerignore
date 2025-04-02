@@ -1,5 +1,4 @@
 deldata/
-mlmodels/
 mlreports/
 reports/
 
@@ -21,4 +20,3 @@ __pycache__/
 ./tests/
 ./scripts/
 ./mlreports/
-./mlmodels/

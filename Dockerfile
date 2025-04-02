@@ -30,13 +30,17 @@ RUN uv venv && uv pip install --python .venv/bin/python --system uv && .venv/bin
 
 COPY . .
 
+
 # Set venv python as default
 ENV VIRTUAL_ENV="/app/.venv"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
+RUN uv pip install pip
+RUN uv run uv run python -m spacy download en_core_web_sm
+
 # Create directories with proper permissions
-RUN mkdir -p /app/data /app/mlmodels /app/mlreports /app/reports && \
-    chmod -R 777 /app/data /app/mlmodels /app/mlreports /app/reports
+RUN mkdir -p /app/data /app/mlreports /app/reports && \
+    chmod -R 777 /app/data /app/mlreports /app/reports
 
 EXPOSE 8000
 

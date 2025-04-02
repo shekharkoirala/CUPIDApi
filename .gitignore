@@ -1,7 +1,10 @@
 # custom git ignore
-data/
+data/new_processed_data.json
+data/processed_data.json
+data/referance_rooms-1737378184366.csv
+data/updated_core_rooms.csv
+data/spacy_docs.pkl
 Notebooks/.ipynb_checkpoints/
-mlmodels/
 mlreports/
 deldata/
 delreports/
