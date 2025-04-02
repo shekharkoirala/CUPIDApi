@@ -1,8 +1,9 @@
 data:
-  processed_data: data/processed_data.json
+  processed_data: data/new_processed_data.json
   reference_data: data/referance_rooms-1737378184366.csv
   supplier_data: data/updated_core_rooms.csv
   vectorizer: data/vectorizer.pkl
+  data_folder: data/
 feature_type: numeric_feature
 log_level: INFO
 model_configs:

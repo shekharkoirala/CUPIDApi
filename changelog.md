@@ -1,4 +1,22 @@
 # Changelog
+[20225-04-02]
+- Dataset creation update ( using spacy )
+- Dataset categorization ( using llm ) for better training data
+  - generated room hierarchy and room features and abbreviations
+- TODO: Process Documentation
+
+[2025-04-01]
+- Docker check for reproducibility
+- Background tasks for the model training using fastapi.
+- Quick documentation for the reproducibility
+
+[2025-03-31]
+- Optimize the feature extraction : combination of numerical and sentence transformers
+- evaluation and testing of the model
+- LLM can be used ( discard as the project explicitly asks for the model training )
+- xgboost model is optimized, since the training data is not accurate, performance is not good.
+
+
 [2025-03-30]
 
 - added parameter tuning to the model training

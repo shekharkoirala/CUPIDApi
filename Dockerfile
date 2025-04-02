@@ -27,6 +27,8 @@ COPY pyproject.toml .
 # RUN uv pip install --no-cache --system .
 RUN uv venv && uv pip install --python .venv/bin/python --system uv && .venv/bin/uv sync
 
+# Install spaCy model
+RUN python -m spacy download en_core_web_sm
 
 COPY . .
 

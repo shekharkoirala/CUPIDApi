@@ -73,6 +73,9 @@ def numeric_manual_feature(data: list[tuple[str, str, int]]) -> tuple[np.ndarray
         model_name = ConfigLoader.get_config()["sentence_transformer_model"]
         embedding_model = SentenceTransformer(model_name)
         for sup_name, ref_name, label in data:
+            if not sup_name or not ref_name:
+                print(f"Skipping pair: {sup_name}, {ref_name}")
+                continue
             ref_norm = normalize_room_name(ref_name)
             sup_norm = normalize_room_name(sup_name)
             ref_tokens = set(ref_norm.split()) if ref_norm else set()
@@ -84,7 +87,7 @@ def numeric_manual_feature(data: list[tuple[str, str, int]]) -> tuple[np.ndarray
             seq_ratio = SequenceMatcher(None, sup_norm.lower(), ref_norm.lower()).ratio()
             emb_cos_sim = embedding_cosine_similarity(sup_norm.lower(), ref_norm.lower(), embedding_model)
             char_ngram_jaccard_score = char_ngram_jaccard(sup_norm.lower(), ref_norm.lower())
-            feature_matrix.append([0.8 * cos_sim, jac, substr, seq_ratio, 1.5 * emb_cos_sim, char_ngram_jaccard_score])
+            feature_matrix.append([cos_sim, 1.2 * jac, substr, 0.8 * seq_ratio, emb_cos_sim, char_ngram_jaccard_score])
             labels.append(label)
 
         feature_matrix = standard_scaler(feature_matrix)
@@ -161,7 +164,7 @@ def get_feature_inference(ref_name: str, sup_name: str, vectorizer: TfidfVectori
         seq_ratio = SequenceMatcher(None, sup_norm.lower(), ref_norm.lower()).ratio()
         emb_cos_sim = embedding_cosine_similarity(sup_norm.lower(), ref_norm.lower(), embedding_model)
         char_ngram_jaccard_score = char_ngram_jaccard(sup_norm.lower(), ref_norm.lower())
-        features = np.array([[cos_sim, jac, substr, seq_ratio, emb_cos_sim, char_ngram_jaccard_score]])
+        features = np.array([[cos_sim, 1.2 * jac, substr, 0.8 * seq_ratio, emb_cos_sim, char_ngram_jaccard_score]])
         return features
 
     elif feature_type == "embedding_feature":

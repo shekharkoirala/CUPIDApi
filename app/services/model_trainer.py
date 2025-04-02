@@ -47,6 +47,7 @@ class ModelTrainer:
                 )
 
             else:
+                self.logger.info(f"Loading data from {data_path}")
                 with open(data_path, "r") as f:
                     data = json.load(f)
 
