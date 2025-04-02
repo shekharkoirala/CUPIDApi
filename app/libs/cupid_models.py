@@ -5,6 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from app.utils.helper import get_next_experiment_folder
 from sklearn.feature_extraction.text import TfidfVectorizer
+from typing import Optional
 
 
 class XGBoostModel:
@@ -79,7 +80,7 @@ class XGBoostModel:
 
 
 class ModelManager:
-    _instance: XGBoostModel | None = None
+    _instance: Optional[XGBoostModel] = None
 
     @classmethod
     def get_model(cls) -> XGBoostModel:
@@ -88,12 +89,12 @@ class ModelManager:
         return cls._instance
 
     @classmethod
-    def set_model(cls, model: XGBoostModel):
+    def set_model(cls, model: XGBoostModel) -> None:
         cls._instance = model
 
 
 class VectorizerManager:
-    _instance: TfidfVectorizer | None = None
+    _instance: Optional[TfidfVectorizer] = None
 
     @classmethod
     def get_vectorizer(cls) -> TfidfVectorizer:
@@ -102,5 +103,5 @@ class VectorizerManager:
         return cls._instance
 
     @classmethod
-    def set_vectorizer(cls, vectorizer: TfidfVectorizer):
+    def set_vectorizer(cls, vectorizer: TfidfVectorizer) -> None:
         cls._instance = vectorizer

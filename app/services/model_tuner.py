@@ -12,7 +12,7 @@ from app.utils.logger import CustomLogger
 
 
 class ModelTuner:
-    def __init__(self):
+    def __init__(self) -> None:
         self.config = ConfigLoader.get_config()
         self.logger = CustomLogger.get_logger()
         self.best_params: Dict[str, Any] = {}

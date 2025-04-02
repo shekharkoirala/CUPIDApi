@@ -19,6 +19,7 @@ from fastapi import BackgroundTasks
 from typing import Dict, Optional
 import asyncio
 import traceback
+from app.utils.config_loader import ConfigLoader
 
 load_dotenv()
 
@@ -82,7 +83,13 @@ async def run_training(task_id: str, parameter_tuning: bool):
 @router.post("/room_match", response_model=RoomMatchResponse)
 async def room_match(request: RoomMatchRequest, api_key: str = Depends(verify_api_key)):
     try:
-        results = await RoomMatcher.match_rooms(reference_catalog=request.referenceCatalog, input_catalog=request.inputCatalog, debug=request.debug)
+        # Get threshold from request or config
+        config = ConfigLoader.get_config()
+        threshold = request.threshold if request.threshold is not None else config["model_configs"]["xgb"]["fixed_params"]["threshold"]
+
+        results = await RoomMatcher.match_rooms(
+            reference_catalog=request.referenceCatalog, input_catalog=request.inputCatalog, debug=request.debug, threshold=threshold
+        )
         return results  # RoomMatchResponse
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

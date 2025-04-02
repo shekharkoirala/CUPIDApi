@@ -1,5 +1,5 @@
 import traceback
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from app.models.schemas import RoomMatchResponse, ReferenceProperty, SupplierCatalog
 from app.libs.cupid_models import ModelManager, VectorizerManager
 from app.libs.cupid_features import get_feature_inference
@@ -10,12 +10,18 @@ from app.utils.logger import CustomLogger
 
 class RoomMatcher:
     @staticmethod
-    async def match_rooms(reference_catalog: list[ReferenceProperty], input_catalog: list[SupplierCatalog], debug: bool = False) -> RoomMatchResponse:
+    async def match_rooms(
+        reference_catalog: list[ReferenceProperty], input_catalog: list[SupplierCatalog], debug: bool = False, threshold: Optional[float] = None
+    ) -> RoomMatchResponse:
         config = ConfigLoader.get_config()
         logger = CustomLogger.get_logger()
         model = ModelManager.get_model()
         if model is None or model.model is None:
             raise ValueError("Model not initialized")
+
+        # Use provided threshold or fall back to config
+        match_threshold = threshold if threshold is not None else config["model_configs"]["xgb"]["fixed_params"]["threshold"]
+        logger.info(f"Using matching threshold: {match_threshold}")
 
         vectorizer = VectorizerManager.get_vectorizer()
         reference_room_names = [room.roomName for room in reference_catalog[0].referenceRoomInfo]
@@ -61,9 +67,9 @@ class RoomMatcher:
                     logger.info(f"{normalize_room_name(supplier_room_name)} ->/t-> {normalize_room_name(reference_room_name)} score: {match_prob}")
 
                 logger.info(
-                    f"Best Match: {best_match} score: {best_score} {best_score >= config['model_configs']['xgb']['fixed_params']['threshold']} of {normalize_room_name(supplier_room_name)}"
+                    f"Best Match: {best_match} score: {best_score} {best_score >= match_threshold} of {normalize_room_name(supplier_room_name)}"
                 )
-                if best_score >= config["model_configs"]["xgb"]["fixed_params"]["threshold"]:
+                if best_score >= match_threshold:
                     mapped_Result = reference_map[best_match].copy()
                     matched_result = supplier_map[normalize_room_name(supplier_room_name)].copy()
                     matched_result["score"] = best_score

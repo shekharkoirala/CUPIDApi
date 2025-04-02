@@ -64,6 +64,7 @@ class SupplierCatalog(BaseModel):
 
 class RoomMatchRequest(BaseModel):
     debug: bool = False
+    threshold: Optional[float] = None
     referenceCatalog: List[ReferenceProperty]
     inputCatalog: List[SupplierCatalog]
 
@@ -71,6 +72,7 @@ class RoomMatchRequest(BaseModel):
         json_schema_extra = {
             "example": {
                 "debug": True,
+                "threshold": 0.9,
                 "referenceCatalog": [
                     {
                         "propertyId": "5122906",
