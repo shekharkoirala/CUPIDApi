@@ -3,6 +3,10 @@ data/
 Notebooks/.ipynb_checkpoints/
 mlmodels/
 mlreports/
+deldata/
+delreports/
+delmlmodels/
+delmlreports/
 
 */__pycache__/
 */*/__pycache__/

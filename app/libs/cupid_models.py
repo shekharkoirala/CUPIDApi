@@ -62,7 +62,14 @@ class XGBoostModel:
         feature_importance_path = os.path.join(exp_folder, "feature_importance.png")
 
         if self.config["feature_type"] == "numeric_feature":
-            feature_names = ["cosine_similarity", "jaccard_similarity", "substring", "sequence_ratio"]
+            feature_names = [
+                "cosine_similarity",
+                "jaccard_similarity",
+                "substring",
+                "sequence_ratio",
+                "embedding_cosine_similarity",
+                "char_ngram_jaccard_score",
+            ]
             plt.figure(figsize=(10, 7))
             plt.barh(feature_names, self.model.feature_importances_)
             plt.savefig(feature_importance_path)

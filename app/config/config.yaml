@@ -11,7 +11,7 @@ model_configs:
       apply_imbalance: false
       eval_metric: logloss
       standard_scaler: true
-      threshold: 0.96
+      threshold: 0.9
     model_name: xgb
     model_path: mlmodels/xgb_model.json
     model_type: xgboost

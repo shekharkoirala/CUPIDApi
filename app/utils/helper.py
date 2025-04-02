@@ -3,9 +3,11 @@ import os
 
 
 def normalize_room_name(name: str) -> str:
+    # original_name = name
     name = name.lower()
     name = re.sub(r"[^a-z0-9\s]", "", name)  # remove punctuation/special chars
     name = re.sub(r"\s+", " ", name).strip()  # collapse multiple spaces
+    # print(f"Normalized {original_name} -> {name}")
     return name
 
 

@@ -45,15 +45,20 @@ class RoomMatcher:
         UnmappedRooms: List[Dict[str, Any]] = []
 
         try:
+            logger.info(f"----------------------------------Matching {supplier_room_names}----------------------------------")
             for supplier_room_name in supplier_room_names:
                 best_match: str = ""
                 best_score: float = 0.0
+                logger.info(f"----------------------------------Matching {normalize_room_name(supplier_room_name)}----------------------------------")
+                logger.info(f"Reference Room Names: {reference_room_names}")
                 for reference_room_name in reference_room_names:
                     features = get_feature_inference(ref_name=reference_room_name, sup_name=supplier_room_name, vectorizer=vectorizer)
                     match_prob: float = model.model.predict_proba(features)[0, 1]
                     if match_prob >= best_score:
                         best_score = match_prob
                         best_match = normalize_room_name(reference_room_name)
+
+                    logger.info(f"{normalize_room_name(supplier_room_name)} ->/t-> {normalize_room_name(reference_room_name)} score: {match_prob}")
 
                 logger.info(
                     f"Best Match: {best_match} score: {best_score} {best_score >= config['model_configs']['xgb']['fixed_params']['threshold']} of {normalize_room_name(supplier_room_name)}"
