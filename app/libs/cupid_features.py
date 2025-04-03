@@ -87,8 +87,6 @@ def numeric_manual_feature(data: list[tuple[str, str, int]]) -> tuple[np.ndarray
             feature_matrix.append([0.8 * cos_sim, jac, substr, seq_ratio, 1.5 * emb_cos_sim, char_ngram_jaccard_score])
             labels.append(label)
 
-        feature_matrix = standard_scaler(feature_matrix)
-
         return np.array(feature_matrix), np.array(labels)
     except Exception as e:
         traceback.print_exc()
