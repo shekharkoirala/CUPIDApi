@@ -36,7 +36,7 @@ ENV VIRTUAL_ENV="/app/.venv"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 RUN uv pip install pip
-RUN uv run uv run python -m spacy download en_core_web_sm
+RUN uv run python -m spacy download en_core_web_sm
 
 # Create directories with proper permissions
 RUN mkdir -p /app/data /app/mlreports /app/reports && \
