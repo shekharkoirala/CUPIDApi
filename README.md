@@ -40,7 +40,7 @@ Lava View Junior Suite
 
 - How to run the model locally: [How to run the model locally](./docs/How%20to%20run%20CUPID%20API.pdf)
 - Training dataset creation: [Training dataset creation](./docs/Training%20Dataset%20Creation%20Documentation.pdf)
-- Process Documentation: [Process Data Documentation](./docs/Process%20Data%20Documentation.pdf)
+- Process Documentation: [Process Data Documentation](./docs/Process%20Documentation.pdf)
 - Possible implementation for future use : [Possible implementation](./docs/Possible%20Implementation.pdf)
 
 
