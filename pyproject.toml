@@ -27,6 +27,7 @@ dependencies = [
     "seaborn>=0.13.2",
     "sentence-transformers>=4.0.1",
     "shap>=0.47.1",
+    "spacy>=3.8.5",
     "types-pyyaml>=6.0.12.20250326",
     "uvicorn>=0.34.0",
     "xgboost>=3.0.0",
